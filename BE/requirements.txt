@@ -1,0 +1,7 @@
+fastapi[all]
+uvicorn[standard]
+psycopg2-binary
+redis
+python-dotenv
+pydantic
+alembic
