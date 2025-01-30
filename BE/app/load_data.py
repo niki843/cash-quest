@@ -1,5 +1,3 @@
-import math
-
 import pandas as pd
 from sqlalchemy.orm import declarative_base
 
@@ -15,7 +13,9 @@ def load_data():
     """Load CSV data into the database."""
 
     db = SessionLocal()
-    batch_size = 1000
+
+    if db.query(Questions.id).first() is not None:
+        return
 
     df = pd.read_csv(CSV_FILE_PATH)
     for index, row in df.iterrows():
@@ -27,10 +27,6 @@ def load_data():
             answer=row[6]
         )
         db.add(question)
-
-        if index + 1 % batch_size == 0:
-            db.commit()
-            print("Pushing")
 
     db.commit()
     db.close()
