@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   fastapi:
     build: .
@@ -10,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/fastapi_db
+      - DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - .:/app
@@ -22,14 +20,10 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: fastapi_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
-      # copy the sql script to fill tables
-      - ./sql/fill_tables.sql:/docker-entrypoint-initdb.d/fill_tables.sql
     restart: always
 
   redis:
