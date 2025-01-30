@@ -7,7 +7,7 @@ load_dotenv()
 
 CSV_URL = os.getenv("JEOPARDY_DATA_URL")
 
-DATA_DIR = "app/data"
+DATA_DIR = "data"
 CSV_FILE_PATH = os.path.join(DATA_DIR, "jeopardy_questions.csv")
 
 
