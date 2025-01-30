@@ -2,7 +2,7 @@
 *.db
 
 # Ignore any local configuration files
-alembic.ini
+app/alembic.ini
 
 # Ignore database dump files or any local data files
 *.bak

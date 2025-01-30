@@ -2,6 +2,8 @@ import subprocess
 
 from fastapi import FastAPI
 
+from load_data import load_data
+
 app = FastAPI()
 
 
@@ -13,6 +15,7 @@ def run_migrations():
 @app.on_event("startup")
 def startup_event():
     run_migrations()
+    load_data()
 
 
 @app.get("/")

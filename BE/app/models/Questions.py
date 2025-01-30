@@ -1,26 +1,12 @@
-import os
-import uuid
-
-from dotenv import load_dotenv
-from sqlalchemy import Column, String, Integer, create_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.models import Base
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+from sqlalchemy import Column, Integer, String
+from .Base import Base  # Assuming you are using Base from your Base.py file
 
 
 class Questions(Base):
-    __tablename__ = "questions"
+    __tablename__ = "questions"  # This will create a table named 'questions' in the DB
 
-    id = Column(String, primary_key=True, index=True, default=str(uuid.uuid4()))
-    category = Column(String, nullable=False)
-    value = Column(Integer, nullable=False)
-    question = Column(String, nullable=False)
-    answer = Column(String, nullable=False)
-
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String, index=True)
+    value = Column(Integer)
+    question = Column(String)
+    answer = Column(String)
