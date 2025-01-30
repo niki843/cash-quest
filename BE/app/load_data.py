@@ -21,6 +21,7 @@ def load_data():
     for index, row in df.iterrows():
         row_price = int(row[4].replace('$', '').replace(',', '')) if isinstance(row[4], str) else 0
         question = Questions(
+            round=row[2],
             category=row[3],
             value=row_price,
             question=row[5],

@@ -8,7 +8,8 @@ class Questions(Base):
     __tablename__ = "questions"  # This will create a table named 'questions' in the DB
 
     id = Column(Integer, primary_key=True, index=True, default=uuid.uuid4)
-    category = Column(String, index=True)
+    category = Column(String)
+    round = Column(String)
     value = Column(Integer)
     question = Column(String)
     answer = Column(String)

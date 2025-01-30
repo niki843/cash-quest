@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from app.exceptions.DataLoadException import DataLoadException
+from exceptions.DataLoadException import DataLoadException
 
 load_dotenv()
 

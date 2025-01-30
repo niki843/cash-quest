@@ -23,6 +23,7 @@ def upgrade() -> None:
         'questions',
         sa.Column('id', sa.String(50), primary_key=True),
         sa.Column('category', sa.String(50), nullable=False),
+        sa.Column('round', sa.String(100), nullable=False),
         sa.Column('value', sa.Integer, nullable=False),
         sa.Column('question', sa.String(1024), nullable=False),
         sa.Column('answer', sa.String(1024), nullable=False),
