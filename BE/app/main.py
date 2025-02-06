@@ -65,7 +65,7 @@ def compare_answers_with_gpt(correct_answer: str, user_answer: str) -> bool:
 
     try:
         response = openai.Completion.create(
-            engine="text-davinci-003",  # You can change the engine here
+            engine="gpt-",
             prompt=prompt,
             max_tokens=50,
             n=1,
