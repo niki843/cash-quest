@@ -1,6 +1,8 @@
 services:
   fastapi:
-    build: .
+    build:
+      context: .
+      dockerfile: BE/Dockerfile
     container_name: fastapi_app
     depends_on:
       - postgres
