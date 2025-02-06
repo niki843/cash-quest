@@ -7,3 +7,4 @@ pydantic
 alembic
 requests
 openai
+pandas

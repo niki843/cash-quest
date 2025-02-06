@@ -1,9 +1,8 @@
-import os
 import subprocess
 import openai
-from dotenv import load_dotenv
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI
+from fastapi import Query, HTTPException
 
 from load_data import load_data
 from models.Base import SessionLocal
@@ -14,9 +13,6 @@ from sqlalchemy import func
 
 
 app = FastAPI()
-
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_KEY")
 
 
 def run_migrations():

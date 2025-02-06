@@ -21,7 +21,7 @@ def download_csv():
     response = requests.get(CSV_URL)
 
     if response.status_code == 200:
-        with open(CSV_FILE_PATH, "w") as csv_data:
+        with open(CSV_FILE_PATH, "w", encoding="utf-8") as csv_data:
             csv_data.writelines(response.content.decode())
     else:
         raise DataLoadException("Could not load initial data")

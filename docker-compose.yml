@@ -1,8 +1,8 @@
 services:
   fastapi:
     build:
-      context: .
-      dockerfile: BE/Dockerfile
+      context: ./BE
+      dockerfile: Dockerfile
     container_name: fastapi_app
     depends_on:
       - postgres
@@ -10,10 +10,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@localhost:5432/postgres
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/postgres
       - REDIS_URL=redis://redis:6379/0
     volumes:
-      - .:/app
+      - ./BE/app:/app
     restart: always
 
   postgres:
