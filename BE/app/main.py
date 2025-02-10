@@ -1,7 +1,5 @@
 import os
-import subprocess
-import openai
-import uvicorn
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 from fastapi import FastAPI
@@ -15,19 +13,13 @@ from pydantic_models.Answer import Answer
 from sqlalchemy import func
 
 load_dotenv()
-openai.api_key = os.getenv("API_KEY")
+client = AsyncOpenAI(api_key=os.getenv("API_KEY"))
 
 app = FastAPI()
 
 
-def run_migrations():
-    """Run Alembic migrations automatically at startup."""
-    subprocess.run(["alembic", "upgrade", "head"])
-
-
 @app.on_event("startup")
 def startup_event():
-    run_migrations()
     load_data()
 
 
@@ -61,7 +53,7 @@ async def get_question(round: str = Query(...), value: str = Query(...)):
         return {"message": "Question not found for the given round and value."}
 
 
-def compare_answers_with_gpt(question: str, correct_answer: str, user_answer: str, retries=10) -> bool:
+async def compare_answers_with_gpt(question: str, correct_answer: str, user_answer: str, retries=10) -> bool:
     lm_response_map = {
         "True": True,
         "False": False
@@ -70,7 +62,7 @@ def compare_answers_with_gpt(question: str, correct_answer: str, user_answer: st
     while not lm_response_map.get(gpt_answer):
         retries -= 1
         # If GPT thinks the answer is correct, we consider it true
-        gpt_answer = call_gpt(question, correct_answer, user_answer)
+        gpt_answer = await call_gpt(question, correct_answer, user_answer)
 
         if retries < 0:
             raise HTTPException(status_code=422, detail="Could not compare answer")
@@ -78,31 +70,31 @@ def compare_answers_with_gpt(question: str, correct_answer: str, user_answer: st
     return lm_response_map.get(gpt_answer)
 
 
-def call_gpt(question: str, correct_answer: str, user_answer: str):
+async def call_gpt(question: str, correct_answer: str, user_answer: str):
     prompt = f"""
             I want you to answer with only True or False. Based on the question '{question}'
             Does the user's answer '{user_answer}' mean the same as the correct answer: '{correct_answer}'?
         """
 
     try:
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo",
-            prompt=prompt,
-            max_tokens=50,
-            n=1,
-            stop=None,
-            temperature=0.5,
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
         )
 
         # Extract the response from OpenAI's API
         return response.choices[0]
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error with GPT API")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error with GPT API" + str(e))
 
 
 @app.post("/verify-answer/")
 async def verify_answer(answer: Answer):
-    breakpoint()
     db = SessionLocal()
 
     # Retrieve the question from the database using the question_id
@@ -111,7 +103,7 @@ async def verify_answer(answer: Answer):
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    does_answer_match = compare_answers_with_gpt(question.value, question.answer, answer.user_answer)
+    does_answer_match = await compare_answers_with_gpt(question.value, question.answer, answer.user_answer)
 
     # Return a response with the result
     return {"correct": does_answer_match, "question": question.question, "user_answer": answer.user_answer}
