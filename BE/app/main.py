@@ -1,5 +1,8 @@
+import os
 import subprocess
 import openai
+import uvicorn
+from dotenv import load_dotenv
 
 from fastapi import FastAPI
 from fastapi import Query, HTTPException
@@ -11,6 +14,8 @@ from pydantic_models.Answer import Answer
 
 from sqlalchemy import func
 
+load_dotenv()
+openai.api_key = os.getenv("API_KEY")
 
 app = FastAPI()
 
@@ -56,12 +61,32 @@ async def get_question(round: str = Query(...), value: str = Query(...)):
         return {"message": "Question not found for the given round and value."}
 
 
-def compare_answers_with_gpt(correct_answer: str, user_answer: str) -> bool:
-    prompt = f"Is the user's answer '{user_answer}' mean the same as this answer: '{correct_answer}'?"
+def compare_answers_with_gpt(question: str, correct_answer: str, user_answer: str, retries=10) -> bool:
+    lm_response_map = {
+        "True": True,
+        "False": False
+    }
+    gpt_answer = call_gpt(question, correct_answer, user_answer)
+    while not lm_response_map.get(gpt_answer):
+        retries -= 1
+        # If GPT thinks the answer is correct, we consider it true
+        gpt_answer = call_gpt(question, correct_answer, user_answer)
+
+        if retries < 0:
+            raise HTTPException(status_code=422, detail="Could not compare answer")
+
+    return lm_response_map.get(gpt_answer)
+
+
+def call_gpt(question: str, correct_answer: str, user_answer: str):
+    prompt = f"""
+            I want you to answer with only True or False. Based on the question '{question}'
+            Does the user's answer '{user_answer}' mean the same as the correct answer: '{correct_answer}'?
+        """
 
     try:
         response = openai.Completion.create(
-            engine="gpt-",
+            engine="gpt-3.5-turbo",
             prompt=prompt,
             max_tokens=50,
             n=1,
@@ -70,18 +95,14 @@ def compare_answers_with_gpt(correct_answer: str, user_answer: str) -> bool:
         )
 
         # Extract the response from OpenAI's API
-        gpt_answer = response.choices[0].text.strip()
-
-        # If GPT thinks the answer is correct, we consider it true
-        if "yes" in gpt_answer.lower():
-            return True
-        return False
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Error with GPT API: " + str(e))
+        return response.choices[0]
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error with GPT API")
 
 
 @app.post("/verify-answer/")
 async def verify_answer(answer: Answer):
+    breakpoint()
     db = SessionLocal()
 
     # Retrieve the question from the database using the question_id
@@ -90,10 +111,7 @@ async def verify_answer(answer: Answer):
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    does_answer_match = compare_answers_with_gpt(question.answer, answer.user_answer)
-
-    # Check if the user's answer is correct
-    is_correct = True if does_answer_match else False
+    does_answer_match = compare_answers_with_gpt(question.value, question.answer, answer.user_answer)
 
     # Return a response with the result
-    return {"correct": is_correct, "question": question.question, "user_answer": answer.user_answer}
+    return {"correct": does_answer_match, "question": question.question, "user_answer": answer.user_answer}
